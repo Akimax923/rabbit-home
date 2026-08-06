@@ -12,6 +12,37 @@ APP_DIR=/opt/rabbit-home
 APP_USER=rabbit-home
 SOURCE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
+
+verify_runtime() {
+  local base_url=${1:-http://127.0.0.1:3100}
+  local expected_version
+  local health
+  local client_file
+  local handshake
+
+  expected_version=$(node -p "require('$APP_DIR/package.json').version")
+  health=$(curl --retry 10 --retry-delay 1 --retry-connrefused -fsS "$base_url/api/health")
+  grep -Fq "\"version\":\"$expected_version\"" <<<"$health" || {
+    echo "运行版本不一致，期望 $expected_version，health 返回：$health" >&2
+    return 1
+  }
+
+  client_file=$(mktemp)
+  curl -fsS "$base_url/vendor/socket.io.min.js?v=$expected_version" -o "$client_file"
+  if [[ $(wc -c < "$client_file") -lt 10000 ]] || head -c 1 "$client_file" | grep -Eq '[<{]'; then
+    echo "Socket.IO 客户端文件无效：$base_url/vendor/socket.io.min.js" >&2
+    rm -f "$client_file"
+    return 1
+  fi
+  rm -f "$client_file"
+
+  handshake=$(curl -fsS "$base_url/socket.io/?EIO=4&transport=polling&t=deploy-check")
+  [[ "$handshake" == 0* ]] || {
+    echo "Socket.IO 握手失败：$handshake" >&2
+    return 1
+  }
+}
+
 usage() {
   cat <<USAGE
 用法：sudo bash deploy/install.sh [选项]
@@ -181,7 +212,8 @@ systemctl daemon-reload
 systemctl enable --now rabbit-home.service rabbit-home-backup.timer
 systemctl restart nginx
 sleep 1
-curl -fsS http://127.0.0.1:3100/api/health >/dev/null
+verify_runtime http://127.0.0.1:3100
+verify_runtime http://127.0.0.1
 
 if [[ -n "$DOMAIN" && "$HTTP_ONLY" -eq 0 ]]; then
   certbot --nginx --non-interactive --agree-tos --redirect -m "$EMAIL" -d "$DOMAIN"

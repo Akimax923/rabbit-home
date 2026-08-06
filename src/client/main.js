@@ -1,7 +1,9 @@
 import { APPEARANCE_OPTIONS, drawPixelAvatar, renderAvatarPreview } from './avatar-preview.js';
 import { OBJECT_LABELS, PixelHomeGame } from './game.js';
 
+const CLIENT_VERSION = document.querySelector('meta[name="rabbit-home-version"]')?.content || 'unknown';
 const state = { user: null, avatar: null, homes: [], currentHome: null, socket: null, game: null, config: {} };
+let socketClientLoadPromise = null;
 const screens = ['loading', 'auth', 'avatar', 'lobby', 'game'];
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -75,7 +77,13 @@ function resolveForm(event) {
 function safeResetForm(form) { if (form instanceof HTMLFormElement) form.reset(); }
 
 async function bootstrap() {
-  try { state.config = await api('/config'); } catch { state.config = {}; }
+  try {
+    state.config = await api('/config');
+    assertCompatibleVersion(state.config);
+  } catch (error) {
+    if (/版本不一致/.test(error.message)) throw error;
+    state.config = {};
+  }
   $('#registration-code-field')?.classList.toggle('hidden', !state.config.registrationCodeRequired);
   try {
     const data = await api('/bootstrap');
@@ -116,6 +124,51 @@ async function submitAuth(form, endpoint) {
   finally { if (button) button.disabled = false; }
 }
 
+function assertCompatibleVersion(serverConfig = {}) {
+  if (!serverConfig.appVersion || CLIENT_VERSION === 'unknown') return;
+  if (serverConfig.appVersion !== CLIENT_VERSION) {
+    throw new Error(`前后端版本不一致：页面 ${CLIENT_VERSION}，服务端 ${serverConfig.appVersion}。请重新部署并强制刷新。`);
+  }
+}
+
+function appearanceOptions() {
+  return state.config.appearanceOptions || APPEARANCE_OPTIONS;
+}
+
+function setSelectValue(select, requestedValue, fallback = 'none') {
+  if (!select) return;
+  const value = String(requestedValue || fallback);
+  const available = Array.from(select.options).some((option) => option.value === value);
+  select.value = available ? value : fallback;
+}
+
+async function ensureSocketIoClient() {
+  if (typeof window.io === 'function') return window.io;
+  if (!socketClientLoadPromise) {
+    const baseUrl = state.config.socketClientUrl || '/vendor/socket.io.min.js';
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const version = encodeURIComponent(state.config.appVersion || CLIENT_VERSION || 'current');
+    const source = `${baseUrl}${separator}v=${version}`;
+
+    socketClientLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = source;
+      script.async = true;
+      script.dataset.rabbitSocketClient = 'dynamic';
+      script.addEventListener('load', () => {
+        if (typeof window.io === 'function') resolve(window.io);
+        else reject(new Error(`Socket.IO 客户端文件已返回，但没有注册 window.io：${baseUrl}`));
+      }, { once: true });
+      script.addEventListener('error', () => reject(new Error(`Socket.IO 客户端加载失败：${baseUrl}`)), { once: true });
+      document.head.append(script);
+    }).catch((error) => {
+      socketClientLoadPromise = null;
+      throw error;
+    });
+  }
+  return socketClientLoadPromise;
+}
+
 function showCreator() {
   creatorRole = state.avatar?.role || 'RABBIT';
   showScreen('avatar');
@@ -133,18 +186,19 @@ function fillCreatorForm() {
   const form = $('#avatar-form');
   if (!(form instanceof HTMLFormElement)) return;
   $('#variant-select').innerHTML = VARIANTS[creatorRole].map((item) => `<option value="${item.value}">${item.label}</option>`).join('');
-  fillSelect($('#head-accessory-select'), APPEARANCE_OPTIONS.headAccessory);
-  fillSelect($('#neck-accessory-select'), APPEARANCE_OPTIONS.neckAccessory);
-  fillSelect($('#back-accessory-select'), APPEARANCE_OPTIONS.backAccessory);
-  fillSelect($('#face-mark-select'), APPEARANCE_OPTIONS.faceMark);
+  const options = appearanceOptions();
+  fillSelect($('#head-accessory-select'), options.headAccessory || APPEARANCE_OPTIONS.headAccessory);
+  fillSelect($('#neck-accessory-select'), options.neckAccessory || APPEARANCE_OPTIONS.neckAccessory);
+  fillSelect($('#back-accessory-select'), options.backAccessory || APPEARANCE_OPTIONS.backAccessory);
+  fillSelect($('#face-mark-select'), options.faceMark || APPEARANCE_OPTIONS.faceMark);
   form.elements.variant.value = existing.variant;
   form.elements.primaryColor.value = existing.primaryColor;
   form.elements.secondaryColor.value = existing.secondaryColor;
   form.elements.eyeColor.value = existing.eyeColor;
-  form.elements.headAccessory.value = existing.headAccessory || existing.accessory || 'none';
-  form.elements.neckAccessory.value = existing.neckAccessory || 'none';
-  form.elements.backAccessory.value = existing.backAccessory || 'none';
-  form.elements.faceMark.value = existing.faceMark || 'none';
+  setSelectValue(form.elements.headAccessory, existing.headAccessory || existing.accessory, 'none');
+  setSelectValue(form.elements.neckAccessory, existing.neckAccessory, 'none');
+  setSelectValue(form.elements.backAccessory, existing.backAccessory, 'none');
+  setSelectValue(form.elements.faceMark, existing.faceMark, 'none');
   updateCreatorPreview();
 }
 
@@ -168,7 +222,8 @@ async function saveAvatar(event) {
   const button = form.querySelector('button[type="submit"]');
   if (button) button.disabled = true;
   try {
-    const data = await api('/avatar', { method: 'PUT', body: JSON.stringify({ ...values, role: creatorRole }) });
+    const payload = { ...values, accessory: values.headAccessory || 'none', role: creatorRole };
+    const data = await api('/avatar', { method: 'PUT', body: JSON.stringify(payload) });
     state.avatar = data.avatar;
     const boot = await api('/bootstrap');
     state.homes = boot.homes || [];
@@ -242,6 +297,7 @@ async function joinHome(event) {
 async function enterHome(home) {
   try {
     await api(`/homes/${home.id}/enter`, { method: 'POST' });
+    const ioFactory = await ensureSocketIoClient();
     state.currentHome = home;
     showScreen('game');
     $('#game-home-name').textContent = home.name;
@@ -252,8 +308,7 @@ async function enterHome(home) {
     $('#chat-messages').innerHTML = '';
     addSystemMessage(`欢迎来到「${home.name}」`);
 
-    if (typeof window.io !== 'function') throw new Error('Socket.IO 客户端没有加载');
-    state.socket = window.io({ withCredentials: true, transports: ['websocket', 'polling'] });
+    state.socket = ioFactory({ path: '/socket.io', withCredentials: true, transports: ['websocket', 'polling'] });
     state.game = new PixelHomeGame({
       parent: 'game-canvas', socket: state.socket, avatar: state.avatar,
       callbacks: {

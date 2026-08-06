@@ -1,0 +1,727 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index df97924..7e2b3f1 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,13 @@
+ # Changelog
+ 
++## 0.2.1
++
++- Fix Socket.IO browser client loading by serving it at `/vendor/socket.io.min.js`.
++- Add frontend/backend version handshake and deployment verification.
++- Make layered accessories authoritative from `/api/config`.
++- Preserve compatibility with legacy single `accessory` values and report exact invalid fields.
++
++
+ ## 0.2.0 - 2026-08-06
+ 
+ ### Added
+diff --git a/MANIFEST.sha256 b/MANIFEST.sha256
+index a63a9b2..e486bef 100644
+--- a/MANIFEST.sha256
++++ b/MANIFEST.sha256
+@@ -5,7 +5,8 @@
+ b911698dc3cf3227d34d0ad6727f1c4408791203c9665de99ab959331a1fb07d  ./.node-version
+ c0ce28ac800773efb43ee1a8a207df82089cc9a9e0d91bc973942beee1b3cfb4  ./.npmrc
+ b911698dc3cf3227d34d0ad6727f1c4408791203c9665de99ab959331a1fb07d  ./.nvmrc
+-558c6ebd3c4fa8d1bd0d1a49f4f4eb2d5f737545bd387a791795046ee235b2a8  ./CHANGELOG.md
++d235600051472c70578064538c3f24af5ca9c4d7790109e236b7040c4f824feb  ./CHANGELOG.md
++34e890ffc99dd969d6652fd02972c1ac900a36b0d2116d2e88c3e199d4c1e9a8  ./FIX_ANALYSIS.md
+ a5535cc467ddab60ac4b4ab7742ef9c7c634f164f39901eb47e2c0a449d77b72  ./LICENSE
+ 694411c0ff64313ffd1ef169c760b35b0ef15514f8e8bdd5c55f10206e126889  ./PACKAGE_CONTENTS.md
+ e8c3b05b3ac16bfb7c87364050b3649d40207f2ca1bd6dab4b843450260f3be3  ./README.md
+@@ -13,15 +14,15 @@ b55e2887a86bf5dda96d644b330344e71c0016a433a0886b630a8f527d819c25  ./REQUIREMENTS
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./backups/.gitkeep
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./data/.gitkeep
+ d91aad7874ac459dd5d8ba9ac2df52757e8c0010d1dfaae455d64b697bf9d0b8  ./deploy/bootstrap-node24.sh
+-fe16738782038e09285d608e3f94074ab5533542e66f6a5176a9316b89cf6ba4  ./deploy/install.sh
++6f334dbc7f30b13141316538d86f3e1ef064f98d2e68db7b60b4238739e3dc87  ./deploy/install.sh
+ 0871a5a2c3097fec816986fe077fca9e1f7be64aa3de2a8641946f5d237f9dba  ./deploy/pull-and-update.sh
+ 7a5c26d9ce9e2ed8c6f9e50b3ff46fe7b4363b83c14fe008c48dc4e199ffe473  ./deploy/ubuntu-packages.txt
+ f127760daaca76649eed10de5474077d28de2efb3c92f2552aefca797df3218f  ./deploy/uninstall.sh
+-472bdc503d66a59b01341d3d746c7b96788a4fb585d7dca1b0faae99f0d9d1fe  ./deploy/update.sh
++984d705e08f047725792a3a22045726bde74fc76020c6b9792e99f5cf7ba6824  ./deploy/update.sh
+ f63a0c0405cbfad90c7a62e94011ba024e056ea84e5dbfb575350a4d9ebe5c46  ./dist/avatar-preview.js
+ 67082b114c2aec76fc0bfeb5b213ac3d16179f1d9bea1145e72d5760853811ad  ./dist/game.js
+-9c42b5cb25cfaa9301d768e8d09e76c74d188b00d02099a4298dfcab9705272d  ./dist/index.html
+-92fc4b380273df254e4868441e268e9960d87bb24eae6d171b8934490edb8b06  ./dist/main.js
++2cd9c42287994d08bde676d96d68d2a93aef25e66c2161a673111935ec8118a3  ./dist/index.html
++eb60042c7e08b7cbb49ccd0637d2a082a3442b1a6c6cb877bc6504830b0e82b0  ./dist/main.js
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./dist/public/.gitkeep
+ b5616cef64fcf8d8312c8f5ec2630f9175d7fc991b3b1b22e778362bb9138c13  ./dist/styles.css
+ 3972d26318e687d49cf94a8996c74e5d976a5ff4490b43b7aa627a7a46790559  ./docs/DEPLOYMENT.md
+@@ -30,24 +31,25 @@ b5616cef64fcf8d8312c8f5ec2630f9175d7fc991b3b1b22e778362bb9138c13  ./dist/styles.
+ e37a654de7ae15e1bd267140f3be1e6ed7890515df1686d221ec98d5c9967b4c  ./docs/GITHUB_DEPLOYMENT.md
+ b8fad93ae1285a527d6122bc0e48b1783a2981af4f2007895056cb8478a5f0c3  ./docs/OPERATIONS.md
+ 25f0a193f092dbc2b180ea3d1e85676f1d15153c85a3135eb3a3f5f99a61d278  ./docs/REFERENCE_ARCHITECTURE.md
+-1dbb9288518c42202c15085258594cfdb7315a3dc49233e31cd664f8b58d5092  ./package.json
++e07ed76c360926dccd0b8235f264aafd341ed2b8ae4b95cd3a12bb5e57914462  ./package.json
+ 3b8e3038f46ec5b033cc0a579bf87851ae4f8e0e6032992479d79e952e5c9570  ./scripts/build-client.js
+ 7af34f1e07d52e988617a03ed6e9fab2ff2e0f1e7d7c8e4dd08628a2458876bc  ./scripts/check-syntax.js
+ f63a0c0405cbfad90c7a62e94011ba024e056ea84e5dbfb575350a4d9ebe5c46  ./src/client/avatar-preview.js
+ 67082b114c2aec76fc0bfeb5b213ac3d16179f1d9bea1145e72d5760853811ad  ./src/client/game.js
+-9c42b5cb25cfaa9301d768e8d09e76c74d188b00d02099a4298dfcab9705272d  ./src/client/index.html
+-92fc4b380273df254e4868441e268e9960d87bb24eae6d171b8934490edb8b06  ./src/client/main.js
++2cd9c42287994d08bde676d96d68d2a93aef25e66c2161a673111935ec8118a3  ./src/client/index.html
++eb60042c7e08b7cbb49ccd0637d2a082a3442b1a6c6cb877bc6504830b0e82b0  ./src/client/main.js
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./src/client/public/.gitkeep
+ b5616cef64fcf8d8312c8f5ec2630f9175d7fc991b3b1b22e778362bb9138c13  ./src/client/styles.css
+ 5f92f8f248a95a9cd84649746f89796a46de759421e734f7a95357d53253b926  ./src/server/admin.js
+-d0eb7776275544ae6b605622537508ca591c3f126584cfe4c35fd6358ef0c95b  ./src/server/api.js
++eab004eee2f2d871fbc2a448cb7cbe084c7e49f1920d0879f7459cebcbced552  ./src/server/api.js
+ b6830341507d8dded39f318988dbbdb6e6233defccddac0f19c1daaba5cbc6f4  ./src/server/backup.js
+-bf4ee8f2720ce0180e135f21b9ce3844d66c981e0a598b96cdfebc897bcb6406  ./src/server/config.js
++81bf9c8f1f00300ce3b7535c6f86b5852006f96968d031813c812f710ceff359  ./src/server/config.js
+ 69c9e9ebe642a60ff8e168458e2178c498fb0d2415f880b0197d0f533a66849a  ./src/server/database.js
+ 658d1ee80edabc1b8be39ec2aeb1a229790d56cf9220e82e2002a3dae753bc5b  ./src/server/game-server.js
+-50b661c332c188817244dac26384fe3ef0f32fb234cef1cc5a19ddfb7ad6c77b  ./src/server/index.js
++a72838a7a76a3f1ba6c24411244f0148b56bb487ff44b1fab918ce0311f348df  ./src/server/index.js
+ 4bda7b67656dad1854310fd63d2bfd6baca9884f2bc1b7370fce06948a79b966  ./src/server/security.js
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./src/shared/.gitkeep
+-1b50be078c33d3322295e298fd014d6bcbe21194cf1ad8090e6062dfa876e8f5  ./tests/client-contract.test.js
++6d857587bdfc06dc26a6dc4eea8588f2670e754913edd7d584c75e596fd9f104  ./tests/appearance.test.js
++594a187872816816be09d3b4d0a4b3386d84f4ff3fa95028e6612b80166a57cf  ./tests/client-contract.test.js
+ ccc3bb2a2d7dd82b9d013abc065c4ae535d352f60da236de03a8193004c11699  ./tests/database.test.js
+ 731db3dfd933bac0ba3e90845d326e629f20c989077b1a79e84b9ff6d561fbb7  ./tests/security.test.js
+diff --git a/deploy/install.sh b/deploy/install.sh
+index 7093049..04268f6 100755
+--- a/deploy/install.sh
++++ b/deploy/install.sh
+@@ -12,6 +12,37 @@ APP_DIR=/opt/rabbit-home
+ APP_USER=rabbit-home
+ SOURCE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+ 
++
++verify_runtime() {
++  local base_url=${1:-http://127.0.0.1:3100}
++  local expected_version
++  local health
++  local client_file
++  local handshake
++
++  expected_version=$(node -p "require('$APP_DIR/package.json').version")
++  health=$(curl --retry 10 --retry-delay 1 --retry-connrefused -fsS "$base_url/api/health")
++  grep -Fq "\"version\":\"$expected_version\"" <<<"$health" || {
++    echo "运行版本不一致，期望 $expected_version，health 返回：$health" >&2
++    return 1
++  }
++
++  client_file=$(mktemp)
++  curl -fsS "$base_url/vendor/socket.io.min.js?v=$expected_version" -o "$client_file"
++  if [[ $(wc -c < "$client_file") -lt 10000 ]] || head -c 1 "$client_file" | grep -Eq '[<{]'; then
++    echo "Socket.IO 客户端文件无效：$base_url/vendor/socket.io.min.js" >&2
++    rm -f "$client_file"
++    return 1
++  fi
++  rm -f "$client_file"
++
++  handshake=$(curl -fsS "$base_url/socket.io/?EIO=4&transport=polling&t=deploy-check")
++  [[ "$handshake" == 0* ]] || {
++    echo "Socket.IO 握手失败：$handshake" >&2
++    return 1
++  }
++}
++
+ usage() {
+   cat <<USAGE
+ 用法：sudo bash deploy/install.sh [选项]
+@@ -181,7 +212,8 @@ systemctl daemon-reload
+ systemctl enable --now rabbit-home.service rabbit-home-backup.timer
+ systemctl restart nginx
+ sleep 1
+-curl -fsS http://127.0.0.1:3100/api/health >/dev/null
++verify_runtime http://127.0.0.1:3100
++verify_runtime http://127.0.0.1
+ 
+ if [[ -n "$DOMAIN" && "$HTTP_ONLY" -eq 0 ]]; then
+   certbot --nginx --non-interactive --agree-tos --redirect -m "$EMAIL" -d "$DOMAIN"
+diff --git a/deploy/update.sh b/deploy/update.sh
+index 71c77a8..924d3e5 100755
+--- a/deploy/update.sh
++++ b/deploy/update.sh
+@@ -14,6 +14,38 @@ ROLLBACK_DIR=$(mktemp -d /tmp/rabbit-home-rollback.XXXXXX)
+ SERVICE_WAS_ACTIVE=0
+ UPDATE_SUCCEEDED=0
+ 
++verify_runtime() {
++  local base_url=${1:-http://127.0.0.1:3100}
++  local expected_version
++  local health
++  local client_file
++  local handshake
++
++  expected_version=$(node -p "require('$APP_DIR/package.json').version")
++  health=$(curl --retry 10 --retry-delay 1 --retry-connrefused -fsS "$base_url/api/health")
++  grep -Fq "\"version\":\"$expected_version\"" <<<"$health" || {
++    echo "运行版本不一致，期望 $expected_version，health 返回：$health" >&2
++    return 1
++  }
++
++  client_file=$(mktemp)
++  curl -fsS "$base_url/vendor/socket.io.min.js?v=$expected_version" -o "$client_file"
++  if [[ $(wc -c < "$client_file") -lt 10000 ]] || head -c 1 "$client_file" | grep -Eq '[<{]'; then
++    echo "Socket.IO 客户端文件无效：$base_url/vendor/socket.io.min.js" >&2
++    head -c 160 "$client_file" >&2 || true
++    rm -f "$client_file"
++    return 1
++  fi
++  rm -f "$client_file"
++
++  handshake=$(curl -fsS "$base_url/socket.io/?EIO=4&transport=polling&t=deploy-check")
++  [[ "$handshake" == 0* ]] || {
++    echo "Socket.IO 握手失败：$handshake" >&2
++    return 1
++  }
++}
++
++
+ cleanup() {
+   local exit_code=$?
+   if [[ "$UPDATE_SUCCEEDED" -eq 0 ]]; then
+@@ -85,8 +117,7 @@ npm prune --registry="$NPM_REGISTRY" --omit=dev --no-audit --no-fund
+ 
+ chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+ systemctl start rabbit-home
+-curl --retry 10 --retry-delay 1 --retry-connrefused \
+-  -fsS http://127.0.0.1:3100/api/health
++verify_runtime http://127.0.0.1:3100
+ 
+ echo
+ UPDATE_SUCCEEDED=1
+diff --git a/package.json b/package.json
+index ed5098f..20211c0 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "rabbit-home",
+-  "version": "0.2.0",
++  "version": "0.2.1",
+   "private": true,
+   "type": "module",
+   "description": "多人像素兔兔与毛毛温馨小窝网页游戏",
+diff --git a/src/client/index.html b/src/client/index.html
+index bb08994..c4aaf6e 100644
+--- a/src/client/index.html
++++ b/src/client/index.html
+@@ -4,6 +4,7 @@
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+   <meta name="theme-color" content="#f1d5b5" />
++  <meta name="rabbit-home-version" content="0.2.1" />
+   <title>兔兔与毛毛的小窝</title>
+   <link rel="stylesheet" href="/styles.css" />
+ </head>
+@@ -169,7 +170,6 @@
+     <div class="modal pixel-card"><h2 id="modal-title"></h2><p id="modal-message"></p><div id="modal-actions" class="modal-actions"></div></div>
+   </div>
+ 
+-  <script src="/socket.io/socket.io.js"></script>
+   <script type="module" src="/main.js"></script>
+ </body>
+ </html>
+diff --git a/src/client/main.js b/src/client/main.js
+index eb09cbc..68b6686 100644
+--- a/src/client/main.js
++++ b/src/client/main.js
+@@ -1,7 +1,9 @@
+ import { APPEARANCE_OPTIONS, drawPixelAvatar, renderAvatarPreview } from './avatar-preview.js';
+ import { OBJECT_LABELS, PixelHomeGame } from './game.js';
+ 
++const CLIENT_VERSION = document.querySelector('meta[name="rabbit-home-version"]')?.content || 'unknown';
+ const state = { user: null, avatar: null, homes: [], currentHome: null, socket: null, game: null, config: {} };
++let socketClientLoadPromise = null;
+ const screens = ['loading', 'auth', 'avatar', 'lobby', 'game'];
+ const $ = (selector) => document.querySelector(selector);
+ const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+@@ -75,7 +77,13 @@ function resolveForm(event) {
+ function safeResetForm(form) { if (form instanceof HTMLFormElement) form.reset(); }
+ 
+ async function bootstrap() {
+-  try { state.config = await api('/config'); } catch { state.config = {}; }
++  try {
++    state.config = await api('/config');
++    assertCompatibleVersion(state.config);
++  } catch (error) {
++    if (/版本不一致/.test(error.message)) throw error;
++    state.config = {};
++  }
+   $('#registration-code-field')?.classList.toggle('hidden', !state.config.registrationCodeRequired);
+   try {
+     const data = await api('/bootstrap');
+@@ -116,6 +124,51 @@ async function submitAuth(form, endpoint) {
+   finally { if (button) button.disabled = false; }
+ }
+ 
++function assertCompatibleVersion(serverConfig = {}) {
++  if (!serverConfig.appVersion || CLIENT_VERSION === 'unknown') return;
++  if (serverConfig.appVersion !== CLIENT_VERSION) {
++    throw new Error(`前后端版本不一致：页面 ${CLIENT_VERSION}，服务端 ${serverConfig.appVersion}。请重新部署并强制刷新。`);
++  }
++}
++
++function appearanceOptions() {
++  return state.config.appearanceOptions || APPEARANCE_OPTIONS;
++}
++
++function setSelectValue(select, requestedValue, fallback = 'none') {
++  if (!select) return;
++  const value = String(requestedValue || fallback);
++  const available = Array.from(select.options).some((option) => option.value === value);
++  select.value = available ? value : fallback;
++}
++
++async function ensureSocketIoClient() {
++  if (typeof window.io === 'function') return window.io;
++  if (!socketClientLoadPromise) {
++    const baseUrl = state.config.socketClientUrl || '/vendor/socket.io.min.js';
++    const separator = baseUrl.includes('?') ? '&' : '?';
++    const version = encodeURIComponent(state.config.appVersion || CLIENT_VERSION || 'current');
++    const source = `${baseUrl}${separator}v=${version}`;
++
++    socketClientLoadPromise = new Promise((resolve, reject) => {
++      const script = document.createElement('script');
++      script.src = source;
++      script.async = true;
++      script.dataset.rabbitSocketClient = 'dynamic';
++      script.addEventListener('load', () => {
++        if (typeof window.io === 'function') resolve(window.io);
++        else reject(new Error(`Socket.IO 客户端文件已返回，但没有注册 window.io：${baseUrl}`));
++      }, { once: true });
++      script.addEventListener('error', () => reject(new Error(`Socket.IO 客户端加载失败：${baseUrl}`)), { once: true });
++      document.head.append(script);
++    }).catch((error) => {
++      socketClientLoadPromise = null;
++      throw error;
++    });
++  }
++  return socketClientLoadPromise;
++}
++
+ function showCreator() {
+   creatorRole = state.avatar?.role || 'RABBIT';
+   showScreen('avatar');
+@@ -133,18 +186,19 @@ function fillCreatorForm() {
+   const form = $('#avatar-form');
+   if (!(form instanceof HTMLFormElement)) return;
+   $('#variant-select').innerHTML = VARIANTS[creatorRole].map((item) => `<option value="${item.value}">${item.label}</option>`).join('');
+-  fillSelect($('#head-accessory-select'), APPEARANCE_OPTIONS.headAccessory);
+-  fillSelect($('#neck-accessory-select'), APPEARANCE_OPTIONS.neckAccessory);
+-  fillSelect($('#back-accessory-select'), APPEARANCE_OPTIONS.backAccessory);
+-  fillSelect($('#face-mark-select'), APPEARANCE_OPTIONS.faceMark);
++  const options = appearanceOptions();
++  fillSelect($('#head-accessory-select'), options.headAccessory || APPEARANCE_OPTIONS.headAccessory);
++  fillSelect($('#neck-accessory-select'), options.neckAccessory || APPEARANCE_OPTIONS.neckAccessory);
++  fillSelect($('#back-accessory-select'), options.backAccessory || APPEARANCE_OPTIONS.backAccessory);
++  fillSelect($('#face-mark-select'), options.faceMark || APPEARANCE_OPTIONS.faceMark);
+   form.elements.variant.value = existing.variant;
+   form.elements.primaryColor.value = existing.primaryColor;
+   form.elements.secondaryColor.value = existing.secondaryColor;
+   form.elements.eyeColor.value = existing.eyeColor;
+-  form.elements.headAccessory.value = existing.headAccessory || existing.accessory || 'none';
+-  form.elements.neckAccessory.value = existing.neckAccessory || 'none';
+-  form.elements.backAccessory.value = existing.backAccessory || 'none';
+-  form.elements.faceMark.value = existing.faceMark || 'none';
++  setSelectValue(form.elements.headAccessory, existing.headAccessory || existing.accessory, 'none');
++  setSelectValue(form.elements.neckAccessory, existing.neckAccessory, 'none');
++  setSelectValue(form.elements.backAccessory, existing.backAccessory, 'none');
++  setSelectValue(form.elements.faceMark, existing.faceMark, 'none');
+   updateCreatorPreview();
+ }
+ 
+@@ -168,7 +222,8 @@ async function saveAvatar(event) {
+   const button = form.querySelector('button[type="submit"]');
+   if (button) button.disabled = true;
+   try {
+-    const data = await api('/avatar', { method: 'PUT', body: JSON.stringify({ ...values, role: creatorRole }) });
++    const payload = { ...values, accessory: values.headAccessory || 'none', role: creatorRole };
++    const data = await api('/avatar', { method: 'PUT', body: JSON.stringify(payload) });
+     state.avatar = data.avatar;
+     const boot = await api('/bootstrap');
+     state.homes = boot.homes || [];
+@@ -242,6 +297,7 @@ async function joinHome(event) {
+ async function enterHome(home) {
+   try {
+     await api(`/homes/${home.id}/enter`, { method: 'POST' });
++    const ioFactory = await ensureSocketIoClient();
+     state.currentHome = home;
+     showScreen('game');
+     $('#game-home-name').textContent = home.name;
+@@ -252,8 +308,7 @@ async function enterHome(home) {
+     $('#chat-messages').innerHTML = '';
+     addSystemMessage(`欢迎来到「${home.name}」`);
+ 
+-    if (typeof window.io !== 'function') throw new Error('Socket.IO 客户端没有加载');
+-    state.socket = window.io({ withCredentials: true, transports: ['websocket', 'polling'] });
++    state.socket = ioFactory({ path: '/socket.io', withCredentials: true, transports: ['websocket', 'polling'] });
+     state.game = new PixelHomeGame({
+       parent: 'game-canvas', socket: state.socket, avatar: state.avatar,
+       callbacks: {
+diff --git a/src/server/api.js b/src/server/api.js
+index 0348303..90d285c 100644
+--- a/src/server/api.js
++++ b/src/server/api.js
+@@ -1,17 +1,64 @@
+ import crypto from 'node:crypto';
+ import express from 'express';
+-import { hashPassword, parseCookies, randomToken, sanitizeText, tokenHash, validUsername, verifyPassword, createRateLimiter } from './security.js';
++import { createRateLimiter, hashPassword, parseCookies, randomToken, sanitizeText, tokenHash, validUsername, verifyPassword } from './security.js';
+ 
+ const COOKIE_NAME = 'rabbit_session';
+ const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
++const SOCKET_CLIENT_URL = '/vendor/socket.io.min.js';
+ const RABBIT_VARIANTS = new Set(['dwarf', 'lop', 'lion']);
+ const MAOMAO_VARIANTS = new Set(['cream', 'cloud', 'chestnut', 'peach']);
+-const HEAD_ACCESSORIES = new Set(['none', 'bow', 'flower', 'leaf', 'cap', 'crown', 'sleepcap', 'carrot']);
+-const NECK_ACCESSORIES = new Set(['none', 'scarf', 'bell', 'bowtie', 'collar']);
+-const BACK_ACCESSORIES = new Set(['none', 'mini-bag', 'heart', 'cloud', 'basket']);
+-const FACE_MARKS = new Set(['none', 'blush', 'patch', 'star']);
+ const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+ 
++export const APPEARANCE_OPTIONS = Object.freeze({
++  headAccessory: [
++    ['none', '不戴头饰'], ['bow', '红色蝴蝶结'], ['flower', '小花'], ['leaf', '嫩叶'],
++    ['cap', '小红帽'], ['crown', '迷你皇冠'], ['sleepcap', '睡帽'], ['carrot', '胡萝卜发卡'],
++  ],
++  neckAccessory: [
++    ['none', '无颈饰'], ['scarf', '暖色围巾'], ['bell', '小铃铛'], ['bowtie', '小领结'], ['collar', '软软项圈'],
++  ],
++  backAccessory: [
++    ['none', '无背饰'], ['mini-bag', '迷你挎包'], ['heart', '爱心背包'], ['cloud', '云朵背饰'], ['basket', '胡萝卜篮'],
++  ],
++  faceMark: [
++    ['none', '自然脸'], ['blush', '粉色腮红'], ['patch', '小创可贴'], ['star', '星星贴纸'],
++  ],
++});
++
++const HEAD_ACCESSORIES = optionSet('headAccessory');
++const NECK_ACCESSORIES = optionSet('neckAccessory');
++const BACK_ACCESSORIES = optionSet('backAccessory');
++const FACE_MARKS = optionSet('faceMark');
++
++const HEAD_ALIASES = new Map([
++  ['red-bow', 'bow'], ['red_bow', 'bow'], ['ribbon', 'bow'],
++  ['mini-crown', 'crown'], ['sleep-cap', 'sleepcap'], ['carrot-clip', 'carrot'],
++]);
++const NECK_ALIASES = new Map([
++  ['neck-scarf', 'scarf'], ['bow-tie', 'bowtie'], ['soft-collar', 'collar'],
++]);
++const BACK_ALIASES = new Map([
++  ['mini_bag', 'mini-bag'], ['heart-bag', 'heart'], ['cloud-back', 'cloud'], ['carrot-basket', 'basket'],
++]);
++const FACE_ALIASES = new Map([
++  ['bandage', 'patch'], ['star-sticker', 'star'],
++]);
++
++function optionSet(key) {
++  return new Set(APPEARANCE_OPTIONS[key].map(([value]) => value));
++}
++
++function publicConfig(config) {
++  return {
++    appVersion: config.appVersion,
++    socketClientUrl: SOCKET_CLIENT_URL,
++    appearanceOptions: APPEARANCE_OPTIONS,
++    registrationCodeRequired: Boolean(config.registrationCode),
++    registrationOpen: config.allowRegistration,
++    maxPlayersPerHome: config.homeMaxPlayers,
++  };
++}
++
+ function publicUser(session) {
+   return {
+     id: session.user_id,
+@@ -20,8 +67,76 @@ function publicUser(session) {
+   };
+ }
+ 
++function normalizedOption(rawValue, allowed, aliases) {
++  const raw = sanitizeText(rawValue, 20);
++  return aliases.get(raw) || raw;
++}
++
++function storedOption(rawValue, allowed, aliases) {
++  const value = normalizedOption(rawValue, allowed, aliases);
++  return allowed.has(value) ? value : 'none';
++}
++
++function storedAppearance(row) {
++  const legacy = sanitizeText(row.accessory, 20);
++  let headAccessory = storedOption(row.head_accessory, HEAD_ACCESSORIES, HEAD_ALIASES);
++  let neckAccessory = storedOption(row.neck_accessory, NECK_ACCESSORIES, NECK_ALIASES);
++  const backAccessory = storedOption(row.back_accessory, BACK_ACCESSORIES, BACK_ALIASES);
++  const faceMark = storedOption(row.face_mark, FACE_MARKS, FACE_ALIASES);
++
++  if (headAccessory === 'none' && legacy) {
++    const legacyHead = normalizedOption(legacy, HEAD_ACCESSORIES, HEAD_ALIASES);
++    const legacyNeck = normalizedOption(legacy, NECK_ACCESSORIES, NECK_ALIASES);
++    if (HEAD_ACCESSORIES.has(legacyHead)) headAccessory = legacyHead;
++    else if (neckAccessory === 'none' && NECK_ACCESSORIES.has(legacyNeck)) neckAccessory = legacyNeck;
++  }
++
++  return { headAccessory, neckAccessory, backAccessory, faceMark };
++}
++
++export function normalizeAppearancePayload(body = {}) {
++  const legacyAccessory = sanitizeText(body.accessory, 20);
++  let headRaw = sanitizeText(body.headAccessory, 20);
++  let neckRaw = sanitizeText(body.neckAccessory, 20);
++  const backRaw = sanitizeText(body.backAccessory, 20) || 'none';
++  const faceRaw = sanitizeText(body.faceMark, 20) || 'none';
++
++  if (!headRaw && legacyAccessory) {
++    const legacyHead = normalizedOption(legacyAccessory, HEAD_ACCESSORIES, HEAD_ALIASES);
++    const legacyNeck = normalizedOption(legacyAccessory, NECK_ACCESSORIES, NECK_ALIASES);
++    if (HEAD_ACCESSORIES.has(legacyHead)) headRaw = legacyHead;
++    else if (NECK_ACCESSORIES.has(legacyNeck)) {
++      headRaw = 'none';
++      if (!neckRaw) neckRaw = legacyNeck;
++    } else {
++      headRaw = legacyAccessory;
++    }
++  }
++
++  const values = {
++    headAccessory: normalizedOption(headRaw || 'none', HEAD_ACCESSORIES, HEAD_ALIASES),
++    neckAccessory: normalizedOption(neckRaw || 'none', NECK_ACCESSORIES, NECK_ALIASES),
++    backAccessory: normalizedOption(backRaw, BACK_ACCESSORIES, BACK_ALIASES),
++    faceMark: normalizedOption(faceRaw, FACE_MARKS, FACE_ALIASES),
++  };
++
++  const invalid = [];
++  if (!HEAD_ACCESSORIES.has(values.headAccessory)) invalid.push(`头饰=${values.headAccessory || '(空)'}`);
++  if (!NECK_ACCESSORIES.has(values.neckAccessory)) invalid.push(`颈饰=${values.neckAccessory || '(空)'}`);
++  if (!BACK_ACCESSORIES.has(values.backAccessory)) invalid.push(`背饰=${values.backAccessory || '(空)'}`);
++  if (!FACE_MARKS.has(values.faceMark)) invalid.push(`面部贴纸=${values.faceMark || '(空)'}`);
++
++  return invalid.length
++    ? { ok: false, error: `配饰选项无效：${invalid.join('，')}`, invalid, values }
++    : { ok: true, values };
++}
++
+ export function publicAvatar(row) {
+   if (!row) return null;
++  const appearance = storedAppearance(row);
++  const legacyAccessory = appearance.headAccessory !== 'none'
++    ? appearance.headAccessory
++    : appearance.neckAccessory !== 'none' ? appearance.neckAccessory : 'none';
+   return {
+     id: row.id,
+     userId: row.user_id,
+@@ -30,11 +145,8 @@ export function publicAvatar(row) {
+     primaryColor: row.primary_color,
+     secondaryColor: row.secondary_color,
+     eyeColor: row.eye_color,
+-    accessory: row.head_accessory || row.accessory || 'none',
+-    headAccessory: row.head_accessory || row.accessory || 'none',
+-    neckAccessory: row.neck_accessory || 'none',
+-    backAccessory: row.back_accessory || 'none',
+-    faceMark: row.face_mark || 'none',
++    accessory: legacyAccessory,
++    ...appearance,
+     lastHomeId: row.last_home_id,
+     x: row.last_x,
+     y: row.last_y,
+@@ -88,8 +200,14 @@ export function createApiRouter(db, config, auth) {
+   const authLimiter = createRateLimiter({ windowMs: 10 * 60_000, limit: 30 });
+   const registerLimiter = createRateLimiter({ windowMs: 60 * 60_000, limit: 10 });
+ 
+-  router.get('/health', (_req, res) => res.json({ ok: true, service: 'rabbit-home', time: new Date().toISOString() }));
+-  router.get('/config', (_req, res) => res.json({ registrationCodeRequired: Boolean(config.registrationCode), registrationOpen: config.allowRegistration }));
++  router.get('/health', (_req, res) => res.json({
++    ok: true,
++    service: 'rabbit-home',
++    version: config.appVersion,
++    socketClientUrl: SOCKET_CLIENT_URL,
++    time: new Date().toISOString(),
++  }));
++  router.get('/config', (_req, res) => res.json(publicConfig(config)));
+ 
+   router.post('/auth/register', registerLimiter, async (req, res, next) => {
+     try {
+@@ -149,7 +267,7 @@ export function createApiRouter(db, config, auth) {
+       user: publicUser(req.auth),
+       avatar: publicAvatar(avatar),
+       homes: db.listHomesForUser(req.auth.user_id).map(publicHome),
+-      config: { maxPlayersPerHome: config.homeMaxPlayers, registrationCodeRequired: Boolean(config.registrationCode) },
++      config: publicConfig(config),
+     });
+   });
+ 
+@@ -159,19 +277,21 @@ export function createApiRouter(db, config, auth) {
+     const primaryColor = sanitizeText(req.body?.primaryColor, 7);
+     const secondaryColor = sanitizeText(req.body?.secondaryColor, 7);
+     const eyeColor = sanitizeText(req.body?.eyeColor, 7);
+-    const headAccessory = sanitizeText(req.body?.headAccessory ?? req.body?.accessory, 20) || 'none';
+-    const neckAccessory = sanitizeText(req.body?.neckAccessory, 20) || 'none';
+-    const backAccessory = sanitizeText(req.body?.backAccessory, 20) || 'none';
+-    const faceMark = sanitizeText(req.body?.faceMark, 20) || 'none';
+     const variants = role === 'RABBIT' ? RABBIT_VARIANTS : MAOMAO_VARIANTS;
+     if (!role || !variants.has(variant)) return res.status(400).json({ error: '角色类型或形象无效' });
+     if (![primaryColor, secondaryColor, eyeColor].every((color) => COLOR_RE.test(color))) return res.status(400).json({ error: '颜色格式无效' });
+-    if (!HEAD_ACCESSORIES.has(headAccessory) || !NECK_ACCESSORIES.has(neckAccessory) || !BACK_ACCESSORIES.has(backAccessory) || !FACE_MARKS.has(faceMark)) {
+-      return res.status(400).json({ error: '配饰选项无效' });
+-    }
++
++    const appearance = normalizeAppearancePayload(req.body);
++    if (!appearance.ok) return res.status(400).json({
++      error: appearance.error,
++      invalidFields: appearance.invalid,
++      appearanceOptions: APPEARANCE_OPTIONS,
++    });
++
+     const avatar = db.upsertAvatar(req.auth.user_id, {
+       role, variant, primaryColor, secondaryColor, eyeColor,
+-      accessory: headAccessory, headAccessory, neckAccessory, backAccessory, faceMark,
++      accessory: appearance.values.headAccessory,
++      ...appearance.values,
+     });
+     res.json({ avatar: publicAvatar(avatar) });
+   });
+diff --git a/src/server/config.js b/src/server/config.js
+index 98759e3..3650b55 100644
+--- a/src/server/config.js
++++ b/src/server/config.js
+@@ -1,12 +1,15 @@
++import fs from 'node:fs';
+ import path from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import process from 'node:process';
+ import 'dotenv/config';
+ 
+ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
++const packageInfo = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+ 
+ export const config = {
+   root,
++  appVersion: String(packageInfo.version || '0.0.0'),
+   host: process.env.HOST || '127.0.0.1',
+   port: Number.parseInt(process.env.PORT || '3100', 10),
+   publicOrigin: (process.env.PUBLIC_ORIGIN || '').replace(/\/$/, ''),
+diff --git a/src/server/index.js b/src/server/index.js
+index eb4ec22..e1d3b01 100644
+--- a/src/server/index.js
++++ b/src/server/index.js
+@@ -1,6 +1,7 @@
+ import fs from 'node:fs';
+ import path from 'node:path';
+ import http from 'node:http';
++import { fileURLToPath } from 'node:url';
+ import express from 'express';
+ import { Server as SocketIOServer } from 'socket.io';
+ import { config } from './config.js';
+@@ -8,6 +9,7 @@ import { GameDatabase } from './database.js';
+ import { createApiRouter, createAuthHelpers } from './api.js';
+ import { GameServer } from './game-server.js';
+ 
++const socketClientBundlePath = resolveSocketClientBundle();
+ const app = express();
+ app.disable('x-powered-by');
+ app.set('trust proxy', 'loopback');
+@@ -31,6 +33,17 @@ app.use((req, res, next) => {
+   res.status(403).json({ error: '请求来源无效' });
+ });
+ 
++// Do not use /socket.io/socket.io.js for the browser bundle. That path shares the
++// Engine.IO transport prefix and can be handled as a handshake request in mixed
++// or stale deployments. Serve the exact bundled client from a normal HTTP path.
++app.get('/vendor/socket.io.min.js', (_req, res, next) => {
++  res.type('application/javascript');
++  res.setHeader('Cache-Control', 'public, max-age=86400');
++  res.sendFile(socketClientBundlePath, (error) => {
++    if (error) next(error);
++  });
++});
++
+ const db = new GameDatabase(config.databasePath);
+ const auth = createAuthHelpers(db, config);
+ app.use('/api', createApiRouter(db, config, auth));
+@@ -44,7 +57,7 @@ if (fs.existsSync(distPath)) {
+     setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+   }));
+   app.use((req, res, next) => {
+-    if (req.method !== 'GET' || req.path.startsWith('/api/') || req.path.startsWith('/socket.io/')) return next();
++    if (req.method !== 'GET' || req.path.startsWith('/api/') || req.path.startsWith('/socket.io/') || req.path.startsWith('/vendor/')) return next();
+     res.setHeader('Cache-Control', 'no-cache');
+     res.sendFile(path.join(distPath, 'index.html'));
+   });
+@@ -61,7 +74,8 @@ app.use((error, _req, res, _next) => {
+ 
+ const server = http.createServer(app);
+ const io = new SocketIOServer(server, {
+-  serveClient: true,
++  path: '/socket.io',
++  serveClient: false,
+   transports: ['websocket', 'polling'],
+   pingInterval: 20_000,
+   pingTimeout: 20_000,
+@@ -75,14 +89,41 @@ const io = new SocketIOServer(server, {
+ const gameServer = new GameServer({ io, db, config, auth });
+ 
+ server.listen(config.port, config.host, () => {
+-  console.log(`[rabbit-home] listening on http://${config.host}:${config.port}`);
++  console.log(`[rabbit-home] v${config.appVersion} listening on http://${config.host}:${config.port}`);
+   console.log(`[rabbit-home] database: ${config.databasePath}`);
+   console.log(`[rabbit-home] public origin: ${config.publicOrigin || 'same-origin auto'}`);
++  console.log(`[rabbit-home] socket client: ${socketClientBundlePath}`);
+ });
+ 
+ const cleanupTimer = setInterval(() => db.cleanupExpiredSessions(), 60 * 60_000);
+ cleanupTimer.unref();
+ 
++function resolveSocketClientBundle() {
++  const entryPath = fileURLToPath(import.meta.resolve('socket.io'));
++  let directory = path.dirname(entryPath);
++  const filesystemRoot = path.parse(directory).root;
++
++  while (directory !== filesystemRoot) {
++    const packagePath = path.join(directory, 'package.json');
++    if (fs.existsSync(packagePath)) {
++      try {
++        const packageInfo = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
++        if (packageInfo.name === 'socket.io') {
++          for (const filename of ['socket.io.min.js', 'socket.io.js']) {
++            const candidate = path.join(directory, 'client-dist', filename);
++            if (fs.existsSync(candidate)) return candidate;
++          }
++        }
++      } catch {
++        // Keep walking upward until the socket.io package root is found.
++      }
++    }
++    directory = path.dirname(directory);
++  }
++
++  throw new Error('找不到 Socket.IO 浏览器客户端文件，请重新执行 npm install');
++}
++
+ function requestOrigin(req) {
+   const protocol = String(req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim();
+   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+diff --git a/tests/client-contract.test.js b/tests/client-contract.test.js
+index 5203dc1..b4a0167 100644
+--- a/tests/client-contract.test.js
++++ b/tests/client-contract.test.js
+@@ -6,6 +6,7 @@ import path from 'node:path';
+ const root = path.resolve(import.meta.dirname, '..');
+ const html = fs.readFileSync(path.join(root, 'src/client/index.html'), 'utf8');
+ const main = fs.readFileSync(path.join(root, 'src/client/main.js'), 'utf8');
++const server = fs.readFileSync(path.join(root, 'src/server/index.js'), 'utf8');
+ 
+ test('client HTML contains the forms, game canvas and chat controls required by main.js', () => {
+   const requiredIds = [
+@@ -21,3 +22,14 @@ test('client form resets are guarded and no async currentTarget.reset call remai
+   assert.doesNotMatch(main, /event\.currentTarget\.reset\s*\(/);
+   assert.match(main, /function safeResetForm\(/);
+ });
++
++test('Socket.IO browser bundle uses a dedicated vendor route', () => {
++  assert.doesNotMatch(html, /\/socket\.io\/socket\.io\.js/);
++  assert.match(main, /function ensureSocketIoClient\(/);
++  assert.match(server, /app\.get\('\/vendor\/socket\.io\.min\.js'/);
++  assert.match(server, /serveClient:\s*false/);
++});
++
++test('avatar save keeps compatibility with the legacy accessory field', () => {
++  assert.match(main, /accessory:\s*values\.headAccessory/);
++});

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Fix Socket.IO browser client loading by serving it at `/vendor/socket.io.min.js`.
+- Add frontend/backend version handshake and deployment verification.
+- Make layered accessories authoritative from `/api/config`.
+- Preserve compatibility with legacy single `accessory` values and report exact invalid fields.
+
+
 ## 0.2.0 - 2026-08-06
 
 ### Added

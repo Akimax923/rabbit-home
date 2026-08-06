@@ -14,6 +14,38 @@ ROLLBACK_DIR=$(mktemp -d /tmp/rabbit-home-rollback.XXXXXX)
 SERVICE_WAS_ACTIVE=0
 UPDATE_SUCCEEDED=0
 
+verify_runtime() {
+  local base_url=${1:-http://127.0.0.1:3100}
+  local expected_version
+  local health
+  local client_file
+  local handshake
+
+  expected_version=$(node -p "require('$APP_DIR/package.json').version")
+  health=$(curl --retry 10 --retry-delay 1 --retry-connrefused -fsS "$base_url/api/health")
+  grep -Fq "\"version\":\"$expected_version\"" <<<"$health" || {
+    echo "运行版本不一致，期望 $expected_version，health 返回：$health" >&2
+    return 1
+  }
+
+  client_file=$(mktemp)
+  curl -fsS "$base_url/vendor/socket.io.min.js?v=$expected_version" -o "$client_file"
+  if [[ $(wc -c < "$client_file") -lt 10000 ]] || head -c 1 "$client_file" | grep -Eq '[<{]'; then
+    echo "Socket.IO 客户端文件无效：$base_url/vendor/socket.io.min.js" >&2
+    head -c 160 "$client_file" >&2 || true
+    rm -f "$client_file"
+    return 1
+  fi
+  rm -f "$client_file"
+
+  handshake=$(curl -fsS "$base_url/socket.io/?EIO=4&transport=polling&t=deploy-check")
+  [[ "$handshake" == 0* ]] || {
+    echo "Socket.IO 握手失败：$handshake" >&2
+    return 1
+  }
+}
+
+
 cleanup() {
   local exit_code=$?
   if [[ "$UPDATE_SUCCEEDED" -eq 0 ]]; then
@@ -85,8 +117,7 @@ npm prune --registry="$NPM_REGISTRY" --omit=dev --no-audit --no-fund
 
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 systemctl start rabbit-home
-curl --retry 10 --retry-delay 1 --retry-connrefused \
-  -fsS http://127.0.0.1:3100/api/health
+verify_runtime http://127.0.0.1:3100
 
 echo
 UPDATE_SUCCEEDED=1

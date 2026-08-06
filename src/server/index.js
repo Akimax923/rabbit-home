@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { Server as SocketIOServer } from 'socket.io';
 import { config } from './config.js';
@@ -8,6 +9,7 @@ import { GameDatabase } from './database.js';
 import { createApiRouter, createAuthHelpers } from './api.js';
 import { GameServer } from './game-server.js';
 
+const socketClientBundlePath = resolveSocketClientBundle();
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 'loopback');
@@ -31,6 +33,17 @@ app.use((req, res, next) => {
   res.status(403).json({ error: '请求来源无效' });
 });
 
+// Do not use /socket.io/socket.io.js for the browser bundle. That path shares the
+// Engine.IO transport prefix and can be handled as a handshake request in mixed
+// or stale deployments. Serve the exact bundled client from a normal HTTP path.
+app.get('/vendor/socket.io.min.js', (_req, res, next) => {
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(socketClientBundlePath, (error) => {
+    if (error) next(error);
+  });
+});
+
 const db = new GameDatabase(config.databasePath);
 const auth = createAuthHelpers(db, config);
 app.use('/api', createApiRouter(db, config, auth));
@@ -44,7 +57,7 @@ if (fs.existsSync(distPath)) {
     setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
   }));
   app.use((req, res, next) => {
-    if (req.method !== 'GET' || req.path.startsWith('/api/') || req.path.startsWith('/socket.io/')) return next();
+    if (req.method !== 'GET' || req.path.startsWith('/api/') || req.path.startsWith('/socket.io/') || req.path.startsWith('/vendor/')) return next();
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(distPath, 'index.html'));
   });
@@ -61,7 +74,8 @@ app.use((error, _req, res, _next) => {
 
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
-  serveClient: true,
+  path: '/socket.io',
+  serveClient: false,
   transports: ['websocket', 'polling'],
   pingInterval: 20_000,
   pingTimeout: 20_000,
@@ -75,13 +89,40 @@ const io = new SocketIOServer(server, {
 const gameServer = new GameServer({ io, db, config, auth });
 
 server.listen(config.port, config.host, () => {
-  console.log(`[rabbit-home] listening on http://${config.host}:${config.port}`);
+  console.log(`[rabbit-home] v${config.appVersion} listening on http://${config.host}:${config.port}`);
   console.log(`[rabbit-home] database: ${config.databasePath}`);
   console.log(`[rabbit-home] public origin: ${config.publicOrigin || 'same-origin auto'}`);
+  console.log(`[rabbit-home] socket client: ${socketClientBundlePath}`);
 });
 
 const cleanupTimer = setInterval(() => db.cleanupExpiredSessions(), 60 * 60_000);
 cleanupTimer.unref();
+
+function resolveSocketClientBundle() {
+  const entryPath = fileURLToPath(import.meta.resolve('socket.io'));
+  let directory = path.dirname(entryPath);
+  const filesystemRoot = path.parse(directory).root;
+
+  while (directory !== filesystemRoot) {
+    const packagePath = path.join(directory, 'package.json');
+    if (fs.existsSync(packagePath)) {
+      try {
+        const packageInfo = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+        if (packageInfo.name === 'socket.io') {
+          for (const filename of ['socket.io.min.js', 'socket.io.js']) {
+            const candidate = path.join(directory, 'client-dist', filename);
+            if (fs.existsSync(candidate)) return candidate;
+          }
+        }
+      } catch {
+        // Keep walking upward until the socket.io package root is found.
+      }
+    }
+    directory = path.dirname(directory);
+  }
+
+  throw new Error('找不到 Socket.IO 浏览器客户端文件，请重新执行 npm install');
+}
 
 function requestOrigin(req) {
   const protocol = String(req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim();
