@@ -1,0 +1,8 @@
+git
+nginx
+rsync
+curl
+ca-certificates
+openssl
+certbot
+python3-certbot-nginx

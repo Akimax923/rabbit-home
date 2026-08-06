@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f1d5b5" />
+  <title>兔兔与毛毛的小窝</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="兔兔与毛毛的小窝">
+        <span class="brand-mark" aria-hidden="true">🐰</span>
+        <span><strong>兔兔与毛毛</strong><small>温馨像素小窝</small></span>
+      </a>
+      <div id="account-bar" class="account-bar hidden">
+        <span id="account-name"></span>
+        <button id="logout-btn" class="pixel-button ghost small" type="button">退出</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="loading-screen" class="screen center-screen">
+        <div class="pixel-card loading-card">
+          <div class="loading-rabbit" aria-hidden="true">🐇</div>
+          <h1>正在铺好小窝的地毯</h1>
+          <p>把胡萝卜、软垫和泡泡澡盆摆到舒服的位置……</p>
+          <div class="pixel-loader"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </section>
+
+      <section id="auth-screen" class="screen center-screen hidden">
+        <div class="welcome-layout">
+          <div class="hero-panel pixel-card">
+            <div class="hero-room" aria-hidden="true">
+              <div class="hero-window"></div><div class="hero-rug"></div><div class="hero-sofa"></div>
+              <div class="hero-rabbit">🐇</div><div class="hero-maomao">☁️</div>
+            </div>
+            <h1>一起住进暖呼呼的小窝</h1>
+            <p>选择兔兔或毛毛，与朋友实时移动、聊天、坐沙发、睡觉、洗澡和梳毛。</p>
+            <div class="feature-chips"><span>多人实时</span><span>像素角色</span><span>合作照料</span></div>
+          </div>
+          <div class="auth-panel pixel-card">
+            <div class="tabs" role="tablist">
+              <button class="tab active" data-tab="login" type="button">登录</button>
+              <button class="tab" data-tab="register" type="button">注册</button>
+            </div>
+            <form id="login-form" class="stack-form">
+              <label>用户名<input name="username" autocomplete="username" minlength="3" maxlength="24" required /></label>
+              <label>密码<input name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" required /></label>
+              <button class="pixel-button primary" type="submit">进入小窝</button>
+            </form>
+            <form id="register-form" class="stack-form hidden">
+              <label>用户名<input name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" required /></label>
+              <label>显示昵称<input name="displayName" autocomplete="nickname" maxlength="18" required /></label>
+              <label>密码<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required /></label>
+              <label id="registration-code-field" class="hidden">注册邀请码<input name="registrationCode" maxlength="64" /></label>
+              <button class="pixel-button primary" type="submit">创建账号</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="avatar-screen" class="screen center-screen hidden">
+        <div class="creator-layout pixel-card">
+          <div class="creator-preview-panel">
+            <span class="eyebrow">角色衣柜</span>
+            <h1>捏一只属于你的小伙伴</h1>
+            <canvas id="avatar-preview" class="avatar-preview" width="190" height="190"></canvas>
+            <p>所有形象共用稳定的脚底锚点与碰撞框，换品种和配饰也不会在小窝里跳动或穿帮。</p>
+          </div>
+          <div class="creator-controls">
+            <div class="role-switch" role="group" aria-label="选择角色">
+              <button class="role-option active" data-role="RABBIT" type="button"><strong>兔兔</strong><small>可发起洗澡与梳毛请求</small></button>
+              <button class="role-option" data-role="MAOMAO" type="button"><strong>毛毛</strong><small>接收请求并帮助兔兔</small></button>
+            </div>
+            <form id="avatar-form" class="creator-form">
+              <label>形象<select id="variant-select" name="variant"></select></label>
+              <div class="color-grid">
+                <label>主毛色<input name="primaryColor" type="color" /></label>
+                <label>花纹色<input name="secondaryColor" type="color" /></label>
+                <label>眼睛色<input name="eyeColor" type="color" /></label>
+              </div>
+              <div class="accessory-grid">
+                <label>头饰<select id="head-accessory-select" name="headAccessory"></select></label>
+                <label>颈饰<select id="neck-accessory-select" name="neckAccessory"></select></label>
+                <label>背饰<select id="back-accessory-select" name="backAccessory"></select></label>
+                <label>面部贴纸<select id="face-mark-select" name="faceMark"></select></label>
+              </div>
+              <button class="pixel-button primary" type="submit">保存角色</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="lobby-screen" class="screen hidden">
+        <div class="lobby-wrap">
+          <aside class="profile-card pixel-card">
+            <span class="eyebrow">我的角色</span>
+            <canvas id="lobby-avatar" class="avatar-preview small-preview" width="190" height="190"></canvas>
+            <h2 id="lobby-name"></h2>
+            <p id="lobby-role"></p>
+            <button id="edit-avatar-btn" class="pixel-button ghost" type="button">更换外观与配饰</button>
+          </aside>
+          <section class="homes-card pixel-card">
+            <div class="section-heading"><div><span class="eyebrow">多人房间</span><h1>选择一个小窝</h1></div><span class="mini-note">每窝最多 8 人</span></div>
+            <div id="homes-list" class="homes-list"></div>
+            <div class="home-actions">
+              <form id="create-home-form" class="inline-form">
+                <label><span>创建新小窝</span><input name="name" maxlength="24" placeholder="例如：胡萝卜暖窝" required /></label>
+                <button class="pixel-button primary" type="submit">创建</button>
+              </form>
+              <form id="join-home-form" class="inline-form">
+                <label><span>用邀请码加入</span><input name="inviteCode" maxlength="12" autocomplete="off" placeholder="8 位邀请码" required /></label>
+                <button class="pixel-button secondary" type="submit">加入</button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="game-screen" class="screen game-screen hidden">
+        <div class="game-top-hud pixel-card compact">
+          <div class="hud-identity"><canvas id="hud-avatar" width="64" height="64"></canvas><div><strong id="hud-name"></strong><span id="game-home-name"></span></div></div>
+          <div class="stat-row">
+            <label title="饱食度">🥕<progress id="stat-hunger" max="100"></progress></label>
+            <label title="清洁度">🫧<progress id="stat-cleanliness" max="100"></progress></label>
+            <label title="心情">💗<progress id="stat-mood" max="100"></progress></label>
+            <label title="精力">🌙<progress id="stat-energy" max="100"></progress></label>
+            <label title="亲密度">✨<progress id="stat-bond" max="1000"></progress></label>
+          </div>
+          <div class="hud-actions"><span id="online-count">0 人在线</span><button id="copy-invite-btn" class="pixel-button ghost small" type="button">复制邀请码</button><button id="leave-game-btn" class="pixel-button ghost small" type="button">返回大厅</button></div>
+        </div>
+
+        <div class="game-layout">
+          <div class="game-column">
+            <div id="game-canvas" class="game-canvas-wrap"></div>
+            <div id="interaction-prompt" class="interaction-prompt hidden"></div>
+            <div id="task-panel" class="task-panel hidden"></div>
+            <div class="mobile-controls" aria-label="移动控制">
+              <div class="dpad"><button data-game-control="up">▲</button><button data-game-control="left">◀</button><button data-game-control="down">▼</button><button data-game-control="right">▶</button></div>
+              <button class="interact-key" data-game-control="interact">E<br><small>互动</small></button>
+            </div>
+          </div>
+
+          <aside class="social-panel pixel-card">
+            <div class="chat-header"><div><span class="eyebrow">小窝频道</span><h2>聊天与表情</h2></div><span id="chat-status" class="online-dot">在线</span></div>
+            <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+            <form id="chat-form" class="chat-form">
+              <input id="chat-input" name="message" maxlength="80" autocomplete="off" placeholder="和小伙伴说句话……" />
+              <button class="pixel-button primary small" type="submit">发送</button>
+            </form>
+            <div class="emote-grid">
+              <button data-emote="hello" type="button">👋 你好</button><button data-emote="follow" type="button">➡️ 跟我来</button>
+              <button data-emote="thanks" type="button">🌼 谢谢</button><button data-emote="happy" type="button">✨ 开心</button>
+              <button data-emote="sleepy" type="button">💤 困困</button><button data-emote="hungry" type="button">🥕 饿啦</button>
+              <button data-emote="bath" type="button">🫧 洗澡</button><button data-emote="hug" type="button">💞 抱抱</button>
+            </div>
+            <div class="control-help"><kbd>WASD</kbd> / <kbd>方向键</kbd> 移动<br><kbd>E</kbd> / <kbd>空格</kbd> 使用家具或互动</div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast-layer" class="toast-layer" aria-live="polite"></div>
+  <div id="modal-layer" class="modal-layer hidden" role="dialog" aria-modal="true">
+    <div class="modal pixel-card"><h2 id="modal-title"></h2><p id="modal-message"></p><div id="modal-actions" class="modal-actions"></div></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

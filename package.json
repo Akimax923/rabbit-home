@@ -1,0 +1,25 @@
+{
+  "name": "rabbit-home",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "多人像素兔兔与毛毛温馨小窝网页游戏",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "scripts": {
+    "build": "node scripts/build-client.js",
+    "start": "NODE_ENV=production node src/server/index.js",
+    "dev": "NODE_ENV=development node --watch src/server/index.js",
+    "test": "node --test",
+    "check": "node scripts/check-syntax.js",
+    "backup": "node src/server/backup.js",
+    "admin": "node src/server/admin.js",
+    "ci": "npm run check && npm test && npm run build"
+  },
+  "dependencies": {
+    "dotenv": "17.2.1",
+    "express": "5.1.0",
+    "socket.io": "4.8.1"
+  }
+}
