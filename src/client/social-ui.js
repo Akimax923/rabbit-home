@@ -4,6 +4,10 @@ const CHAT_DOM_LIMIT = 120;
 const NEAR_BOTTOM_PX = 56;
 
 const $ = (selector) => document.querySelector(selector);
+
+injectSocialControls();
+injectSocialStyles();
+
 const chatList = $('#chat-messages');
 const socialPanel = document.querySelector('.social-panel');
 const collapseButton = $('#chat-collapse-btn');
@@ -19,6 +23,90 @@ let lastKnownScrollTop = 0;
 let suppressNotificationsUntil = Date.now() + 1200;
 let lastCareSignature = '';
 let lastCareAt = 0;
+
+function injectSocialControls() {
+  const panel = document.querySelector('.social-panel');
+  const header = panel?.querySelector('.chat-header');
+  const list = panel?.querySelector('#chat-messages');
+  if (!panel || !header || !list) return;
+
+  if (!$('#chat-toolbar')) {
+    const toolbar = document.createElement('div');
+    toolbar.id = 'chat-toolbar';
+    toolbar.className = 'chat-toolbar';
+
+    const notification = document.createElement('button');
+    notification.id = 'notification-toggle-btn';
+    notification.className = 'pixel-button ghost tiny';
+    notification.type = 'button';
+    notification.textContent = '🔔 开启后台提醒';
+
+    const collapse = document.createElement('button');
+    collapse.id = 'chat-collapse-btn';
+    collapse.className = 'pixel-button ghost tiny';
+    collapse.type = 'button';
+    collapse.setAttribute('aria-expanded', 'true');
+    collapse.textContent = '收起聊天';
+
+    toolbar.append(notification, collapse);
+    header.append(toolbar);
+  }
+
+  if (!$('#chat-load-earlier')) {
+    const earlier = document.createElement('button');
+    earlier.id = 'chat-load-earlier';
+    earlier.className = 'chat-edge-action hidden';
+    earlier.type = 'button';
+    earlier.textContent = '↑ 查看更早消息';
+    list.before(earlier);
+  }
+
+  if (!$('#chat-new-messages')) {
+    const newer = document.createElement('button');
+    newer.id = 'chat-new-messages';
+    newer.className = 'chat-edge-action new hidden';
+    newer.type = 'button';
+    newer.textContent = '↓ 新消息';
+    list.after(newer);
+  }
+}
+
+function injectSocialStyles() {
+  if ($('#rabbit-social-ui-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'rabbit-social-ui-styles';
+  style.textContent = `
+    @media (min-width: 981px) {
+      #game-screen:not(.hidden) { height: calc(100vh - 72px); min-height: 560px; overflow: hidden; }
+      #game-screen:not(.hidden) .game-layout { height: calc(100vh - 177px); min-height: 0; }
+      #game-screen:not(.hidden) .game-column,
+      #game-screen:not(.hidden) .social-panel { min-height: 0; height: 100%; }
+      #game-screen:not(.hidden) .game-canvas-wrap { min-height: 0; }
+    }
+    .social-panel { overflow: hidden; }
+    .chat-header { align-items: center; }
+    .chat-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 5px; flex-wrap: wrap; margin-left: auto; }
+    .pixel-button.tiny { padding: 5px 7px; font-size: 10px; box-shadow: 2px 2px 0 rgba(89,49,46,.2); }
+    .chat-messages { min-height: 0; max-height: 100%; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-gutter: stable; }
+    .chat-history-hidden { display: none !important; }
+    .chat-edge-action { width: 100%; border: 2px dashed #a77666; background: #f7e8d2; color: #7c5148; padding: 6px 8px; font: inherit; font-size: 10px; cursor: pointer; }
+    .chat-edge-action.new { background: #fff0c2; border-style: solid; font-weight: bold; }
+    .social-panel.chat-collapsed { grid-template-rows: auto auto auto; align-content: start; }
+    .social-panel.chat-collapsed #chat-messages,
+    .social-panel.chat-collapsed #chat-load-earlier,
+    .social-panel.chat-collapsed #chat-new-messages,
+    .social-panel.chat-collapsed #chat-form { display: none !important; }
+    #notification-toggle-btn[data-state="granted"] { background: #e4eddd; }
+    #notification-toggle-btn[data-state="insecure"],
+    #notification-toggle-btn[data-state="unsupported"],
+    #notification-toggle-btn[data-state="denied"] { opacity: .72; }
+    @media (max-width: 980px) {
+      .social-panel { max-height: 560px; }
+      .chat-messages { max-height: 300px; min-height: 180px; }
+    }
+  `;
+  document.head.append(style);
+}
 
 function messages() {
   return chatList ? Array.from(chatList.children).filter((node) => node.classList?.contains('chat-message')) : [];
@@ -100,7 +188,7 @@ function syncNotificationButton() {
   if (!window.isSecureContext) {
     notificationButton.textContent = '后台提醒需 HTTPS';
     notificationButton.dataset.state = 'insecure';
-    notificationButton.title = '浏览器只允许 HTTPS 页面发送系统通知';
+    notificationButton.title = '浏览器只允许 HTTPS 页面发送系统通知；HTTP 下仍显示标签页未读数量';
     return;
   }
   const permission = Notification.permission;
@@ -115,7 +203,7 @@ function syncNotificationButton() {
 async function requestNotifications() {
   if (!('Notification' in window)) return showToast('当前浏览器不支持系统通知');
   if (!window.isSecureContext) {
-    return showToast('系统后台提醒需要 HTTPS。当前 HTTP 公网 IP 下仍会保留标签页未读数量。', 6500);
+    return showToast('系统后台提醒受浏览器安全策略限制，需要 HTTPS。当前 HTTP 下会使用标签页未读数量和返回时汇总提醒。', 7000);
   }
   if (Notification.permission === 'denied') {
     return showToast('通知权限已被浏览器关闭，请在网站权限设置中重新允许。', 6500);
