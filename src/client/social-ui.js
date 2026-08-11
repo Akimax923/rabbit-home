@@ -30,6 +30,8 @@ function injectSocialControls() {
   const list = panel?.querySelector('#chat-messages');
   if (!panel || !header || !list) return;
 
+  panel.setAttribute('aria-label', '小窝聊天窗口');
+
   if (!$('#chat-toolbar')) {
     const toolbar = document.createElement('div');
     toolbar.id = 'chat-toolbar';
@@ -39,14 +41,15 @@ function injectSocialControls() {
     notification.id = 'notification-toggle-btn';
     notification.className = 'pixel-button ghost tiny';
     notification.type = 'button';
-    notification.textContent = '🔔 开启后台提醒';
+    notification.textContent = '🔔 提醒';
 
     const collapse = document.createElement('button');
     collapse.id = 'chat-collapse-btn';
     collapse.className = 'pixel-button ghost tiny';
     collapse.type = 'button';
     collapse.setAttribute('aria-expanded', 'true');
-    collapse.textContent = '收起聊天';
+    collapse.textContent = '−';
+    collapse.title = '收起聊天';
 
     toolbar.append(notification, collapse);
     header.append(toolbar);
@@ -76,33 +79,242 @@ function injectSocialStyles() {
   const style = document.createElement('style');
   style.id = 'rabbit-social-ui-styles';
   style.textContent = `
-    @media (min-width: 981px) {
-      #game-screen:not(.hidden) { height: calc(100vh - 72px); min-height: 560px; overflow: hidden; }
-      #game-screen:not(.hidden) .game-layout { height: calc(100vh - 177px); min-height: 0; }
-      #game-screen:not(.hidden) .game-column,
-      #game-screen:not(.hidden) .social-panel { min-height: 0; height: 100%; }
-      #game-screen:not(.hidden) .game-canvas-wrap { min-height: 0; }
+    /* v0.2.3: game-first layout. Chat no longer participates in page/grid height. */
+    #game-screen:not(.hidden) {
+      position: relative;
+      height: calc(100dvh - 72px);
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .social-panel { overflow: hidden; }
-    .chat-header { align-items: center; }
-    .chat-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 5px; flex-wrap: wrap; margin-left: auto; }
-    .pixel-button.tiny { padding: 5px 7px; font-size: 10px; box-shadow: 2px 2px 0 rgba(89,49,46,.2); }
-    .chat-messages { min-height: 0; max-height: 100%; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-gutter: stable; }
+
+    #game-screen:not(.hidden) .game-top-hud {
+      flex: 0 0 auto;
+      min-height: 75px;
+    }
+
+    #game-screen:not(.hidden) .game-layout {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      height: auto;
+      margin-top: 0;
+      display: block;
+    }
+
+    #game-screen:not(.hidden) .game-column {
+      position: absolute;
+      inset: 0;
+      display: block;
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #game-screen:not(.hidden) .game-canvas-wrap {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: #9f6c5a;
+    }
+
+    /* Preserve the 960x576 world ratio but cover the whole game viewport. */
+    #game-screen:not(.hidden) .pixel-game-canvas {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none;
+      max-height: none;
+      object-fit: cover;
+      object-position: center center;
+      image-rendering: pixelated;
+    }
+
+    #game-screen:not(.hidden) .interaction-prompt {
+      bottom: 18px;
+      max-width: min(72%, 680px);
+    }
+
+    #game-screen:not(.hidden) .task-panel {
+      max-width: min(420px, calc(100% - 32px));
+    }
+
+    /* Moore-Manor-style floating social window. */
+    #game-screen:not(.hidden) .social-panel {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 25;
+      width: min(330px, calc(100% - 36px));
+      height: min(360px, calc(100% - 36px));
+      min-height: 0;
+      padding: 12px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+      gap: 8px;
+      background: rgba(255, 247, 233, .96);
+      backdrop-filter: blur(3px);
+      box-shadow: 6px 6px 0 rgba(89,49,46,.27);
+      transition: width .14s ease, height .14s ease, padding .14s ease;
+    }
+
+    #game-screen:not(.hidden) .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      padding-bottom: 7px;
+    }
+
+    #game-screen:not(.hidden) .chat-header > div:first-child {
+      min-width: 0;
+      flex: 1;
+    }
+
+    #game-screen:not(.hidden) .chat-header h2 {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      flex: 0 0 auto;
+    }
+
+    .pixel-button.tiny {
+      padding: 5px 7px;
+      min-width: 30px;
+      font-size: 10px;
+      box-shadow: 2px 2px 0 rgba(89,49,46,.2);
+    }
+
+    .chat-messages {
+      min-height: 0;
+      height: 100%;
+      overflow-y: auto !important;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      padding-right: 4px;
+    }
+
     .chat-history-hidden { display: none !important; }
-    .chat-edge-action { width: 100%; border: 2px dashed #a77666; background: #f7e8d2; color: #7c5148; padding: 6px 8px; font: inherit; font-size: 10px; cursor: pointer; }
-    .chat-edge-action.new { background: #fff0c2; border-style: solid; font-weight: bold; }
-    .social-panel.chat-collapsed { grid-template-rows: auto auto auto; align-content: start; }
-    .social-panel.chat-collapsed #chat-messages,
-    .social-panel.chat-collapsed #chat-load-earlier,
-    .social-panel.chat-collapsed #chat-new-messages,
-    .social-panel.chat-collapsed #chat-form { display: none !important; }
+
+    .chat-edge-action {
+      width: 100%;
+      border: 2px dashed #a77666;
+      background: #f7e8d2;
+      color: #7c5148;
+      padding: 5px 7px;
+      font: inherit;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .chat-edge-action.new {
+      background: #fff0c2;
+      border-style: solid;
+      font-weight: bold;
+    }
+
+    /* Collapsed state: only a compact title/launcher remains on top of the game. */
+    #game-screen:not(.hidden) .social-panel.chat-collapsed {
+      width: 168px;
+      height: 48px;
+      padding: 6px 8px;
+      display: block;
+      overflow: hidden;
+    }
+
+    #game-screen:not(.hidden) .social-panel.chat-collapsed .chat-header {
+      height: 32px;
+      padding: 0;
+      border-bottom: 0;
+    }
+
+    #game-screen:not(.hidden) .social-panel.chat-collapsed .chat-header .eyebrow,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-status,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #notification-toggle-btn,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-messages,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-load-earlier,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-new-messages,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-form,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed .emote-grid,
+    #game-screen:not(.hidden) .social-panel.chat-collapsed .control-help {
+      display: none !important;
+    }
+
+    #game-screen:not(.hidden) .social-panel.chat-collapsed .chat-header h2 {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-collapse-btn::before {
+      content: '💬 ';
+    }
+
     #notification-toggle-btn[data-state="granted"] { background: #e4eddd; }
     #notification-toggle-btn[data-state="insecure"],
     #notification-toggle-btn[data-state="unsupported"],
     #notification-toggle-btn[data-state="denied"] { opacity: .72; }
+
     @media (max-width: 980px) {
-      .social-panel { max-height: 560px; }
-      .chat-messages { max-height: 300px; min-height: 180px; }
+      #game-screen:not(.hidden) {
+        height: calc(100dvh - 72px);
+        min-height: 520px;
+      }
+      #game-screen:not(.hidden) .social-panel {
+        right: 10px;
+        bottom: 10px;
+        width: min(320px, calc(100% - 20px));
+        height: min(320px, 52%);
+      }
+      #game-screen:not(.hidden) .social-panel.chat-collapsed {
+        width: 156px;
+        height: 46px;
+      }
+      #game-screen:not(.hidden) .mobile-controls {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        z-index: 20;
+        pointer-events: none;
+      }
+      #game-screen:not(.hidden) .mobile-controls button {
+        pointer-events: auto;
+      }
+    }
+
+    @media (max-width: 700px) {
+      #game-screen:not(.hidden) {
+        height: 100dvh;
+        min-height: 480px;
+        padding: 6px;
+      }
+      #game-screen:not(.hidden) .game-top-hud {
+        max-height: 138px;
+        overflow-y: auto;
+      }
+      #game-screen:not(.hidden) .social-panel {
+        right: 8px;
+        bottom: 92px;
+        height: min(300px, 46%);
+      }
     }
   `;
   document.head.append(style);
@@ -181,12 +393,12 @@ function notificationAvailable() {
 function syncNotificationButton() {
   if (!notificationButton) return;
   if (!('Notification' in window)) {
-    notificationButton.textContent = '系统提醒不可用';
+    notificationButton.textContent = '提醒不可用';
     notificationButton.dataset.state = 'unsupported';
     return;
   }
   if (!window.isSecureContext) {
-    notificationButton.textContent = '后台提醒需 HTTPS';
+    notificationButton.textContent = '提醒需 HTTPS';
     notificationButton.dataset.state = 'insecure';
     notificationButton.title = '浏览器只允许 HTTPS 页面发送系统通知；HTTP 下仍显示标签页未读数量';
     return;
@@ -194,10 +406,10 @@ function syncNotificationButton() {
   const permission = Notification.permission;
   notificationButton.dataset.state = permission;
   notificationButton.textContent = permission === 'granted'
-    ? '🔔 后台提醒已开'
+    ? '🔔 已开'
     : permission === 'denied'
-      ? '🔕 后台提醒已关闭'
-      : '🔔 开启后台提醒';
+      ? '🔕 已关'
+      : '🔔 提醒';
 }
 
 async function requestNotifications() {
@@ -313,8 +525,10 @@ if (modalLayer) {
 
 collapseButton?.addEventListener('click', () => {
   const collapsed = socialPanel?.classList.toggle('chat-collapsed') === true;
-  collapseButton.textContent = collapsed ? '展开聊天' : '收起聊天';
+  collapseButton.textContent = collapsed ? '展开' : '−';
+  collapseButton.title = collapsed ? '展开聊天' : '收起聊天';
   collapseButton.setAttribute('aria-expanded', String(!collapsed));
+  if (!collapsed) requestAnimationFrame(scrollChatToBottom);
 });
 
 loadEarlierButton?.addEventListener('click', () => {
