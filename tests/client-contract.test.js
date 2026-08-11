@@ -6,7 +6,9 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '..');
 const html = fs.readFileSync(path.join(root, 'src/client/index.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'src/client/main.js'), 'utf8');
+const social = fs.readFileSync(path.join(root, 'src/client/social-ui.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'src/server/index.js'), 'utf8');
+const packageInfo = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('client HTML contains the forms, game canvas and chat controls required by main.js', () => {
   const requiredIds = [
@@ -32,4 +34,34 @@ test('Socket.IO browser bundle uses a dedicated vendor route', () => {
 
 test('avatar save keeps compatibility with the legacy accessory field', () => {
   assert.match(main, /accessory:\s*values\.headAccessory/);
+});
+
+test('page version matches package version and social UI is loaded before main client', () => {
+  const versionMatch = html.match(/<meta name="rabbit-home-version" content="([^"]+)"/);
+  assert.ok(versionMatch, 'missing rabbit-home-version meta');
+  assert.equal(versionMatch[1], packageInfo.version);
+  const socialIndex = html.indexOf('src="/social-ui.js"');
+  const mainIndex = html.indexOf('src="/main.js"');
+  assert.ok(socialIndex >= 0, 'social-ui.js is not loaded');
+  assert.ok(mainIndex > socialIndex, 'social-ui.js must be wired before main.js');
+});
+
+test('chat UI bounds history, preserves scroll intent and exposes earlier/new-message controls', () => {
+  assert.match(social, /const HISTORY_BATCH = 24/);
+  assert.match(social, /const CHAT_DOM_LIMIT = 120/);
+  assert.match(social, /chat-load-earlier/);
+  assert.match(social, /chat-new-messages/);
+  assert.match(social, /chat-history-hidden/);
+  assert.match(social, /overscroll-behavior:\s*contain/);
+  assert.match(social, /previousScrollTop/);
+});
+
+test('background reminders support secure Notification API and HTTP fallback unread title', () => {
+  assert.match(social, /Notification\.requestPermission\(\)/);
+  assert.match(social, /new Notification\(/);
+  assert.match(social, /window\.isSecureContext/);
+  assert.match(social, /document\.hidden/);
+  assert.match(social, /后台提醒需 HTTPS/);
+  assert.match(social, /document\.title = document\.hidden && unreadCount > 0/);
+  assert.match(social, /想洗澡\|想梳毛/);
 });
