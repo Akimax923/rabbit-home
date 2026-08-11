@@ -59,8 +59,11 @@ test('chat UI bounds history, preserves scroll intent and exposes earlier/new-me
   assert.match(social, /previousScrollTop/);
 });
 
-test('authoritative layout makes chat a true overlay and uses JS cover sizing for canvas', () => {
-  assert.match(layout, /social-panel[^}]*position:\s*fixed\s*!important/s);
+test('authoritative layout reparents chat to game screen overlay and uses JS cover sizing for canvas', () => {
+  assert.match(layout, /socialPanel\.parentElement !== gameScreen/);
+  assert.match(layout, /gameScreen\.append\(socialPanel\)/);
+  assert.match(layout, /socialPanel\.dataset\.overlay = 'true'/);
+  assert.match(layout, /> \.social-panel\[data-overlay="true"\][^{]*\{[\s\S]*position:\s*absolute\s*!important/);
   assert.match(layout, /social-panel\.chat-collapsed/);
   assert.match(layout, /chat-messages[^}]*overflow-y:\s*auto\s*!important/s);
   assert.match(layout, /const scale = Math\.max\(width \/ WORLD_WIDTH, height \/ WORLD_HEIGHT\)/);
