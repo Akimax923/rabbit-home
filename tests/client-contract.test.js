@@ -7,6 +7,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const html = fs.readFileSync(path.join(root, 'src/client/index.html'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'src/client/main.js'), 'utf8');
 const social = fs.readFileSync(path.join(root, 'src/client/social-ui.js'), 'utf8');
+const layout = fs.readFileSync(path.join(root, 'src/client/game-layout.js'), 'utf8');
 const server = fs.readFileSync(path.join(root, 'src/server/index.js'), 'utf8');
 const packageInfo = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
@@ -36,14 +37,16 @@ test('avatar save keeps compatibility with the legacy accessory field', () => {
   assert.match(main, /accessory:\s*values\.headAccessory/);
 });
 
-test('page version matches package version and social UI is loaded before main client', () => {
+test('page version matches package version and all client controllers are wired', () => {
   const versionMatch = html.match(/<meta name="rabbit-home-version" content="([^"]+)"/);
   assert.ok(versionMatch, 'missing rabbit-home-version meta');
   assert.equal(versionMatch[1], packageInfo.version);
   const socialIndex = html.indexOf('src="/social-ui.js"');
   const mainIndex = html.indexOf('src="/main.js"');
+  const layoutIndex = html.indexOf('src="/game-layout.js"');
   assert.ok(socialIndex >= 0, 'social-ui.js is not loaded');
   assert.ok(mainIndex > socialIndex, 'social-ui.js must be wired before main.js');
+  assert.ok(layoutIndex > mainIndex, 'game-layout.js must be loaded after the game client');
 });
 
 test('chat UI bounds history, preserves scroll intent and exposes earlier/new-message controls', () => {
@@ -56,13 +59,22 @@ test('chat UI bounds history, preserves scroll intent and exposes earlier/new-me
   assert.match(social, /previousScrollTop/);
 });
 
-test('game-first layout makes chat floating/collapsible and canvas cover the available viewport', () => {
-  assert.match(social, /game-layout[^}]*display:\s*block/s);
-  assert.match(social, /game-column[^}]*position:\s*absolute/s);
-  assert.match(social, /social-panel[^}]*position:\s*absolute/s);
-  assert.match(social, /social-panel\.chat-collapsed/);
-  assert.match(social, /pixel-game-canvas[^}]*object-fit:\s*cover/s);
-  assert.match(social, /height:\s*calc\(100dvh - 72px\)/);
+test('authoritative layout makes chat a true overlay and uses JS cover sizing for canvas', () => {
+  assert.match(layout, /social-panel[^}]*position:\s*fixed\s*!important/s);
+  assert.match(layout, /social-panel\.chat-collapsed/);
+  assert.match(layout, /chat-messages[^}]*overflow-y:\s*auto\s*!important/s);
+  assert.match(layout, /const scale = Math\.max\(width \/ WORLD_WIDTH, height \/ WORLD_HEIGHT\)/);
+  assert.match(layout, /ResizeObserver/);
+  assert.match(layout, /canvas\.style\.setProperty\('width'/);
+  assert.match(layout, /game-layout[^}]*flex:\s*1 1 0\s*!important/s);
+  assert.match(layout, /game-column[^}]*position:\s*absolute\s*!important/s);
+});
+
+test('collapsed chat hides every content section except the compact launcher', () => {
+  for (const selector of ['#chat-messages', '#chat-form', '.emote-grid', '.control-help', '#notification-toggle-btn', '#chat-status']) {
+    assert.ok(layout.includes(selector), `collapsed rule missing ${selector}`);
+  }
+  assert.match(layout, /height:\s*50px\s*!important/);
 });
 
 test('background reminders support secure Notification API and HTTP fallback unread title', () => {
