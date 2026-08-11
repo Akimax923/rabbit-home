@@ -8,6 +8,15 @@ const gameColumn = gameScreen?.querySelector('.game-column');
 const canvasWrap = $('#game-canvas');
 const socialPanel = gameScreen?.querySelector('.social-panel');
 
+// The chat panel used to live inside .game-layout, which meant legacy grid/flex
+// rules could still place it below or beside the game. Move it to the screen
+// HUD layer before applying any layout styles. Event listeners and element IDs
+// remain intact because the same DOM node is reparented rather than recreated.
+if (gameScreen && socialPanel && socialPanel.parentElement !== gameScreen) {
+  gameScreen.append(socialPanel);
+}
+if (socialPanel) socialPanel.dataset.overlay = 'true';
+
 injectLayoutStyles();
 
 function injectLayoutStyles() {
@@ -15,7 +24,7 @@ function injectLayoutStyles() {
   const style = document.createElement('style');
   style.id = 'rabbit-game-layout-styles';
   style.textContent = `
-    /* v0.2.4 authoritative game-first layout */
+    /* Authoritative game-first layout. */
     #game-screen:not(.hidden) {
       box-sizing: border-box !important;
       position: relative !important;
@@ -31,6 +40,8 @@ function injectLayoutStyles() {
     #game-screen:not(.hidden) .game-top-hud {
       flex: 0 0 auto !important;
       margin: 0 !important;
+      position: relative !important;
+      z-index: 30 !important;
     }
 
     #game-screen:not(.hidden) .game-layout {
@@ -81,48 +92,52 @@ function injectLayoutStyles() {
       image-rendering: crisp-edges !important;
     }
 
-    /* Real HUD overlay: it never consumes game-layout width or height. */
-    #game-screen:not(.hidden) .social-panel {
-      position: fixed !important;
+    /* True HUD overlay: this node is a direct child of #game-screen. */
+    #game-screen:not(.hidden) > .social-panel[data-overlay="true"] {
+      position: absolute !important;
       right: 18px !important;
       bottom: 18px !important;
       z-index: 80 !important;
       width: 330px !important;
       height: 360px !important;
-      max-width: calc(100vw - 36px) !important;
-      max-height: min(360px, calc(100dvh - 190px)) !important;
+      max-width: calc(100% - 36px) !important;
+      max-height: calc(100% - 120px) !important;
       min-width: 0 !important;
       min-height: 0 !important;
       margin: 0 !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
+      display: grid !important;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto auto !important;
+      gap: 8px !important;
     }
 
-    #game-screen:not(.hidden) .social-panel .chat-messages {
+    #game-screen:not(.hidden) > .social-panel[data-overlay="true"] .chat-messages {
       min-height: 0 !important;
+      height: 100% !important;
       overflow-y: auto !important;
       overflow-x: hidden !important;
       overscroll-behavior: contain !important;
     }
 
-    #game-screen:not(.hidden) .social-panel.chat-collapsed {
+    #game-screen:not(.hidden) > .social-panel[data-overlay="true"].chat-collapsed {
       width: 172px !important;
       height: 50px !important;
-      max-width: calc(100vw - 24px) !important;
+      max-width: calc(100% - 24px) !important;
       max-height: 50px !important;
       padding: 6px 8px !important;
       display: block !important;
     }
 
-    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-messages,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-load-earlier,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-new-messages,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-form,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed .emote-grid,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed .control-help,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed #notification-toggle-btn,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed #chat-status,
-    #game-screen:not(.hidden) .social-panel.chat-collapsed .eyebrow {
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed #chat-messages,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed #chat-load-earlier,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed #chat-new-messages,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed #chat-form,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed .emote-grid,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed .control-help,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed #notification-toggle-btn,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed #chat-status,
+    #game-screen:not(.hidden) > .social-panel.chat-collapsed .eyebrow {
       display: none !important;
     }
 
@@ -131,14 +146,14 @@ function injectLayoutStyles() {
         height: 100dvh !important;
         padding: 6px !important;
       }
-      #game-screen:not(.hidden) .social-panel {
+      #game-screen:not(.hidden) > .social-panel[data-overlay="true"] {
         right: 8px !important;
         bottom: 92px !important;
-        width: min(320px, calc(100vw - 16px)) !important;
-        height: min(300px, 46dvh) !important;
-        max-height: 46dvh !important;
+        width: min(320px, calc(100% - 16px)) !important;
+        height: min(300px, 46%) !important;
+        max-height: 46% !important;
       }
-      #game-screen:not(.hidden) .social-panel.chat-collapsed {
+      #game-screen:not(.hidden) > .social-panel[data-overlay="true"].chat-collapsed {
         width: 160px !important;
         height: 48px !important;
         max-height: 48px !important;
@@ -168,12 +183,16 @@ function fitCanvasCover() {
 
 function verifyLayout() {
   if (!gameScreen || gameScreen.classList.contains('hidden')) return;
-  fitCanvasCover();
 
-  // Defensive cleanup: old grid sizing must never participate in game sizing.
+  // Repair the DOM as well as CSS in case an older HTML build still nests chat
+  // inside .game-layout. This makes the hotfix safe across incremental deploys.
+  if (socialPanel && socialPanel.parentElement !== gameScreen) gameScreen.append(socialPanel);
+  if (socialPanel) socialPanel.dataset.overlay = 'true';
+
+  fitCanvasCover();
   gameLayout?.style.setProperty('grid-template-columns', 'none', 'important');
   gameColumn?.style.setProperty('min-height', '0', 'important');
-  socialPanel?.style.setProperty('grid-column', 'auto', 'important');
+  socialPanel?.style.removeProperty('grid-column');
 }
 
 if (canvasWrap) {
