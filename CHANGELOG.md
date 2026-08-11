@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Fix chat panel long-running session performance by bounding DOM history and adding history expansion.
+- Add chat unread tracking, jump-to-latest behavior and collapsed chat mode.
+- Add browser background notification support for chat and care requests when HTTPS permission is available.
+- Provide clear fallback behavior for HTTP deployments where browser notification APIs are restricted.
+
 ## 0.2.1
 
 - Fix Socket.IO browser client loading by serving it at `/vendor/socket.io.min.js`.
