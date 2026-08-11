@@ -26,9 +26,9 @@ jobs:
         shell: bash
         run: |
           if [[ -f package-lock.json ]]; then
-            npm ci
+            npm ci --no-audit --no-fund
           else
-            npm install
+            npm install --no-audit --no-fund
           fi
 
       - name: Syntax check
@@ -39,3 +39,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify built social UI and version wiring
+        shell: bash
+        run: |
+          test -f dist/social-ui.js
+          grep -q 'src="/social-ui.js"' dist/index.html
+          VERSION=$(node -p "require('./package.json').version")
+          grep -q "rabbit-home-version\" content=\"$VERSION\"" dist/index.html
