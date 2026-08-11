@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3
+
+- Make the game canvas the primary viewport and fill all space below the HUD.
+- Move chat out of the main grid into a floating bottom-right game window.
+- Add a compact collapsed chat launcher so the social UI can stay out of the way.
+- Keep chat history independently scrollable with bounded DOM history and earlier-message expansion.
+- Use cover-style canvas presentation so the room fills the available viewport without stretching character proportions.
+
 ## 0.2.2
 
 - Fix chat panel long-running session performance by bounding DOM history and adding history expansion.
