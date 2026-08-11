@@ -56,12 +56,21 @@ test('chat UI bounds history, preserves scroll intent and exposes earlier/new-me
   assert.match(social, /previousScrollTop/);
 });
 
+test('game-first layout makes chat floating/collapsible and canvas cover the available viewport', () => {
+  assert.match(social, /game-layout[^}]*display:\s*block/s);
+  assert.match(social, /game-column[^}]*position:\s*absolute/s);
+  assert.match(social, /social-panel[^}]*position:\s*absolute/s);
+  assert.match(social, /social-panel\.chat-collapsed/);
+  assert.match(social, /pixel-game-canvas[^}]*object-fit:\s*cover/s);
+  assert.match(social, /height:\s*calc\(100dvh - 72px\)/);
+});
+
 test('background reminders support secure Notification API and HTTP fallback unread title', () => {
   assert.match(social, /Notification\.requestPermission\(\)/);
   assert.match(social, /new Notification\(/);
   assert.match(social, /window\.isSecureContext/);
   assert.match(social, /document\.hidden/);
-  assert.match(social, /后台提醒需 HTTPS/);
+  assert.match(social, /提醒需 HTTPS/);
   assert.match(social, /document\.title = document\.hidden && unreadCount > 0/);
   assert.match(social, /想洗澡\|想梳毛/);
 });
