@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.4
+
+- Add an authoritative `game-layout.js` controller for game viewport sizing.
+- Make the chat panel a true fixed HUD overlay so it never participates in game layout width or height.
+- Compute canvas cover sizing with `Math.max(...)` from the actual available viewport instead of relying on CSS `object-fit` while the game client still used contain sizing.
+- Use `ResizeObserver` and canvas mutation observation so the room immediately refits after entering a home, resizing the browser, or rotating a mobile device.
+- Ensure collapsed chat hides messages, input, emotes, controls, status and notification controls, leaving only the compact launcher.
+
 ## 0.2.3
 
 - Make the game canvas the primary viewport and fill all space below the HUD.
